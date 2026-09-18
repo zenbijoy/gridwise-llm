@@ -14,6 +14,8 @@ from app.config import (
     LLM_PROVIDER,
     LLM_TIMEOUT_SECONDS,
     OPENROUTER_API_KEY,
+    OPENROUTER_API_KEYS,
+    OPENROUTER_MODEL,
     get_active_model,
 )
 
@@ -174,31 +176,61 @@ def _call_groq(notes_payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _call_openrouter(notes_payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Call OpenRouter API via HTTP."""
-    if not OPENROUTER_API_KEY:
-        raise ValueError("OPENROUTER_API_KEY is not configured")
+    """Call OpenRouter API via HTTP with automatic key rotation and model fallback."""
+    keys_to_try = list(OPENROUTER_API_KEYS)
+    if not keys_to_try and OPENROUTER_API_KEY:
+        keys_to_try = [OPENROUTER_API_KEY]
 
-    model_name = get_active_model()
+    if not keys_to_try:
+        raise ValueError("No OPENROUTER_API_KEY or OPENROUTER_API_KEYS configured")
+
+    # Select primary model, and add fallback models in order
+    configured_model = get_active_model() if LLM_PROVIDER == "openrouter" else (OPENROUTER_MODEL or "deepseek/deepseek-v4-flash-0731:free")
+    candidate_models = [configured_model]
+    for m in ["deepseek/deepseek-v4-flash-0731:free", "z-ai/glm-5.2:free", "liquid/lfm-2.5-2.6b:free"]:
+        if m not in candidate_models:
+            candidate_models.append(m)
+
     user_content = f"Operator notes to interpret:\n{json.dumps(notes_payload, indent=2)}\n\nReturn the directive_interpretation JSON array."
 
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    body = {
-        "model": model_name,
-        "messages": [
-            {"role": "system", "content": DIRECTIVE_SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ],
-        "temperature": 0.0,
-    }
-
+    last_error: Exception | None = None
     with httpx.Client(timeout=LLM_TIMEOUT_SECONDS) as client:
-        resp = client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=body)
-        resp.raise_for_status()
-        content = resp.json()["choices"][0]["message"]["content"]
-        return _extract_json_array(content)
+        for key in keys_to_try:
+            for current_model in candidate_models:
+                headers = {
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://gridwise.duckdns.org",
+                    "X-Title": "GridWise LLM",
+                }
+                body = {
+                    "model": current_model,
+                    "messages": [
+                        {"role": "system", "content": DIRECTIVE_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_content},
+                    ],
+                    "temperature": 0.0,
+                }
+                try:
+                    resp = client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=body)
+                    if resp.status_code == 429:
+                        logger.warning(f"OpenRouter key ({key[:14]}...) or model '{current_model}' rate-limited (429). Rotating to next key/model...")
+                        continue
+                    if resp.status_code in (401, 403, 404):
+                        logger.warning(f"OpenRouter key ({key[:14]}...) model '{current_model}' returned {resp.status_code}. Rotating...")
+                        continue
+                    resp.raise_for_status()
+                    data = resp.json()
+                    content = data["choices"][0]["message"]["content"]
+                    return _extract_json_array(content)
+                except Exception as exc:
+                    last_error = exc
+                    logger.warning(f"OpenRouter key ({key[:14]}...) model '{current_model}' error: {exc}")
+                    continue
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("All OpenRouter keys and models exhausted without response")
 
 
 def _call_anthropic(notes_payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -431,18 +463,35 @@ def interpret_operator_notes(operator_notes: list[str]) -> list[dict[str, Any]]:
 
     caller = caller_map.get(provider)
     if caller is None:
-        logger.warning(f"Unknown LLM provider '{provider}', using emergency fallback")
+        logger.warning(f"Unknown LLM provider '{provider}', checking OpenRouter fallback...")
+        if OPENROUTER_API_KEY or OPENROUTER_API_KEYS:
+            try:
+                return _call_openrouter(notes_payload)
+            except Exception as e:
+                logger.warning(f"OpenRouter fallback failed: {e}")
         return emergency_deterministic_fallback(notes_payload)
 
-    # Attempt call with at most 1 retry
+    # Attempt primary provider call with at most 1 retry
     last_error: Exception | None = None
     for attempt in range(2):
         try:
             return caller(notes_payload)
         except Exception as exc:
             last_error = exc
-            logger.warning(f"LLM call attempt {attempt + 1} failed: {type(exc).__name__}: {exc}")
+            logger.warning(f"LLM call attempt {attempt + 1} ({provider}) failed: {type(exc).__name__}: {exc}")
 
-    # If provider fails after retry, use deterministic emergency fallback
-    logger.error(f"LLM provider failed after 2 attempts ({last_error}). Triggering emergency fallback.")
+    # Primary provider failed (e.g. rate limit, quota exhaustion, or service outage).
+    # If OpenRouter is configured and was not the primary provider, try it before deterministic fallback!
+    has_openrouter = bool(OPENROUTER_API_KEY or OPENROUTER_API_KEYS)
+    if provider != "openrouter" and has_openrouter:
+        logger.info(f"Primary provider '{provider}' failed ({last_error}). Triggering automatic OpenRouter fallback with rotated keys...")
+        try:
+            result = _call_openrouter(notes_payload)
+            logger.info("Automatic OpenRouter fallback succeeded!")
+            return result
+        except Exception as or_exc:
+            logger.error(f"OpenRouter fallback also failed: {or_exc}")
+
+    # If all configured LLM providers fail, use deterministic emergency fallback
+    logger.error(f"All LLM providers failed ({last_error}). Triggering emergency deterministic fallback.")
     return emergency_deterministic_fallback(notes_payload)

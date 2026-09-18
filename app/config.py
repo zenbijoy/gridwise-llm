@@ -26,13 +26,23 @@ LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "18.0"))
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_API_KEYS_RAW = os.getenv("OPENROUTER_API_KEYS", "").strip()
+OPENROUTER_API_KEYS: list[str] = [
+    k.strip() for k in OPENROUTER_API_KEYS_RAW.split(",") if k.strip()
+]
+if OPENROUTER_API_KEY and OPENROUTER_API_KEY not in OPENROUTER_API_KEYS:
+    OPENROUTER_API_KEYS.insert(0, OPENROUTER_API_KEY)
+if OPENROUTER_API_KEYS and not OPENROUTER_API_KEY:
+    OPENROUTER_API_KEY = OPENROUTER_API_KEYS[0]
+
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "").strip()
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 
 # Default model identifiers if LLM_MODEL is not explicitly set
 DEFAULT_MODELS = {
     "gemini": "gemini-2.5-flash",
     "groq": "llama-3.3-70b-versatile",
-    "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
+    "openrouter": OPENROUTER_MODEL or "deepseek/deepseek-v4-flash-0731:free",
     "anthropic": "claude-3-5-haiku-20241022",
 }
 
