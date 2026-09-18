@@ -11,8 +11,8 @@ services:
     environment:
       - PORT=8000
     ports:
-      # Kept internal behind Nginx reverse proxy on the host
-      - "127.0.0.1:8000:8000"
+      # Kept internal behind Nginx reverse proxy on host port 8009 (prevents conflict with host port 8000 / Supabase)
+      - "127.0.0.1:8009:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 30s

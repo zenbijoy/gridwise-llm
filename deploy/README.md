@@ -10,16 +10,16 @@ Comprehensive, step-by-step guide for deploying GridWise LLM on a fresh **Ubuntu
                INTERNET
                   │ HTTPS :443
                   ▼
-         ┌─────────────────┐
-         │  Nginx Reverse  │ (TLS Termination, Rate Limiting, Body Size Cap)
-         │  Proxy          │
-         └────────┬────────┘
-                  │ Internal HTTP :8000
-                  ▼
-         ┌─────────────────┐
-         │  GridWise LLM   │ (Unprivileged container: appuser)
-         │  Docker Service │ (PuLP + CBC, FastAPI, In-Memory Rate Limiter)
-         └─────────────────┘
+          ┌─────────────────┐
+          │  Nginx Reverse  │ (TLS Termination, Rate Limiting, Body Size Cap)
+          │  Proxy          │
+          └────────┬────────┘
+                   │ Internal HTTP :8009
+                   ▼
+          ┌─────────────────┐
+          │  GridWise LLM   │ (Unprivileged container: appuser)
+          │  Docker Service │ (PuLP + CBC, FastAPI, In-Memory Rate Limiter)
+          └─────────────────┘
 ```
 
 ---
@@ -100,11 +100,11 @@ Verify service health and internal status:
 docker compose ps
 
 # Check internal liveness probe
-curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8009/health
 # Expected: {"status":"ok"}
 
 # Check internal readiness probe
-curl http://127.0.0.1:8000/ready
+curl http://127.0.0.1:8009/ready
 # Expected: {"status":"ready"}
 
 # Check container logs
