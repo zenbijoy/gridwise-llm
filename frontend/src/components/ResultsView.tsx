@@ -1,0 +1,149 @@
+import React from 'react';
+import { OptimizeResponse, HourData } from '../types';
+import { CheckCircle2, ArrowDownCircle, ArrowUpCircle, Minus, Copy, Check } from 'lucide-react';
+
+interface ResultsViewProps {
+  response: OptimizeResponse | null;
+  hours: HourData[];
+}
+
+export const ResultsView: React.FC<ResultsViewProps> = ({ response, hours }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  if (!response) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-8 border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400 dark:text-slate-500 space-y-2">
+        <CheckCircle2 className="w-8 h-8 mx-auto opacity-30 text-emerald-500" />
+        <p>No optimization schedule generated yet. Click "Optimize Energy" to run the pipeline.</p>
+      </div>
+    );
+  }
+
+  const handleCopyJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(response, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const totalDemand = hours.reduce((s, h) => s + h.demand_kwh, 0);
+  const totalSolarUsed = response.hourly_plan.reduce((s, p) => s + p.solar_used_kwh, 0);
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div>
+          <h2 className="text-sm font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span>Optimal 24-Hour Energy Schedule</span>
+            <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-mono">
+              PuLP CBC Solved
+            </span>
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Cost-minimal, constraint-compliant dispatch verified by independent mathematical replay.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleCopyJson}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+          <span>{copied ? 'Copied JSON!' : 'Copy Result JSON'}</span>
+        </button>
+      </div>
+
+      {/* Plan Narrative Summary Card */}
+      <div className="bg-emerald-50/70 dark:bg-emerald-950/40 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed font-medium">
+        <span className="font-bold text-emerald-800 dark:text-emerald-300 mr-1.5 uppercase text-[10px] tracking-wider block sm:inline">
+          Executive Dispatch Summary:
+        </span>
+        {response.plan_summary}
+      </div>
+
+      {/* 24-Hour Hourly Plan Table */}
+      <div className="overflow-x-auto max-h-[460px] rounded-lg border border-slate-200 dark:border-slate-800">
+        <table className="w-full text-left text-xs">
+          <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 z-10">
+            <tr>
+              <th className="py-2.5 px-3 font-mono">Hour</th>
+              <th className="py-2.5 px-3 font-mono">Demand (kWh)</th>
+              <th className="py-2.5 px-3 font-mono">Solar Used (kWh)</th>
+              <th className="py-2.5 px-3 font-mono">Grid Import (kWh)</th>
+              <th className="py-2.5 px-3">Battery Action</th>
+              <th className="py-2.5 px-3 font-mono">Action (kWh)</th>
+              <th className="py-2.5 px-3 font-mono">SOC After (kWh)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-[11px]">
+            {response.hourly_plan.map((p, idx) => {
+              const d = hours[idx]?.demand_kwh ?? 0;
+              const isCharging = p.battery_charge_kwh > 0.01;
+              const isDischarging = p.battery_discharge_kwh > 0.01;
+
+              return (
+                <tr key={p.hour} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
+                  <td className="py-2 px-3 font-semibold text-slate-500 dark:text-slate-400">
+                    {p.hour.toString().padStart(2, '0')}:00
+                  </td>
+                  <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{d.toFixed(1)}</td>
+                  <td className="py-2 px-3 text-amber-600 dark:text-amber-400">{p.solar_used_kwh.toFixed(1)}</td>
+                  <td className="py-2 px-3 text-blue-600 dark:text-blue-400 font-semibold">{p.grid_kwh.toFixed(1)}</td>
+
+                  {/* Battery Action Badge */}
+                  <td className="py-2 px-3 font-sans">
+                    {isCharging ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        <ArrowDownCircle className="w-3 h-3 text-emerald-600" />
+                        Charge
+                      </span>
+                    ) : isDischarging ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                        <ArrowUpCircle className="w-3 h-3 text-purple-600" />
+                        Discharge
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        <Minus className="w-3 h-3" />
+                        Idle
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Rate */}
+                  <td className="py-2 px-3">
+                    {isCharging ? (
+                      <span className="text-emerald-600 dark:text-emerald-400">+{p.battery_charge_kwh.toFixed(1)}</span>
+                    ) : isDischarging ? (
+                      <span className="text-purple-600 dark:text-purple-400">-{p.battery_discharge_kwh.toFixed(1)}</span>
+                    ) : (
+                      <span className="text-slate-400">0.0</span>
+                    )}
+                  </td>
+
+                  {/* SOC After */}
+                  <td className="py-2 px-3 font-semibold text-slate-800 dark:text-slate-200">
+                    {p.battery_energy_after_kwh.toFixed(1)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot className="sticky bottom-0 bg-slate-100 dark:bg-slate-800/95 font-semibold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 font-mono text-xs">
+            <tr>
+              <td className="py-2.5 px-3">Totals</td>
+              <td className="py-2.5 px-3">{totalDemand.toFixed(1)} kWh</td>
+              <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400">{totalSolarUsed.toFixed(1)} kWh</td>
+              <td className="py-2.5 px-3 text-blue-600 dark:text-blue-400 font-bold">{response.total_grid_kwh.toFixed(1)} kWh</td>
+              <td colSpan={2} className="py-2.5 px-3 text-right">Total Cost:</td>
+              <td className="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-bold">
+                ৳{response.total_cost_bdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+};

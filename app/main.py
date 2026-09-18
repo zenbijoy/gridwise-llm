@@ -1,14 +1,16 @@
-"""FastAPI application for GridWise LLM - 24-Hour Campus Energy Scheduling API."""
-
+from pathlib import Path
 import logging
 import time
 import uuid
 import pulp
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import (
+    CORS_ALLOWED_ORIGINS,
     MAX_REQUEST_BODY_SIZE_BYTES,
     RATE_LIMIT_ENABLED,
     REPORT_TOL,
@@ -35,6 +37,17 @@ app = FastAPI(
     description="Production-grade 24-Hour Campus Energy Scheduling API for BUP CSE Fest 2026.",
     docs_url="/docs",
     redoc_url="/redoc",
+)
+
+# ── Middleware: CORS ─────────────────────────────────────────────────────────
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID", "Retry-After"],
 )
 
 
@@ -254,6 +267,34 @@ def optimize_energy(payload: OptimizeRequest, request: Request) -> OptimizeRespo
     return response
 
 
+# ── Route Aliases for /api prefix compatibility ──────────────────────────────
+
+@app.get("/api/health", include_in_schema=False)
+def api_health_check():
+    """Alias for /health under /api prefix."""
+    return health_check()
+
+
+@app.get("/api/ready", include_in_schema=False)
+def api_readiness_check():
+    """Alias for /ready under /api prefix."""
+    return readiness_check()
+
+
+@app.post("/api/optimize-energy", response_model=OptimizeResponse, include_in_schema=False)
+def api_optimize_energy(payload: OptimizeRequest, request: Request) -> OptimizeResponse:
+    """Alias for /optimize-energy under /api prefix."""
+    return optimize_energy(payload, request)
+
+
+# ── SPA Static Files Mount (if frontend is built) ────────────────────────────
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

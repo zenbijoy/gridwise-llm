@@ -41,6 +41,15 @@ RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").strip().lower() == 
 RATE_LIMIT_REQUESTS_PER_MINUTE = int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "60"))
 MAX_REQUEST_BODY_SIZE_BYTES = int(os.getenv("MAX_REQUEST_BODY_SIZE_BYTES", "1048576"))  # 1 MB
 
+# CORS Configuration
+CORS_ALLOWED_ORIGINS_RAW = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000",
+)
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in CORS_ALLOWED_ORIGINS_RAW.split(",") if origin.strip()
+]
+
 # Live testing flag
 RUN_LIVE_LLM_TESTS = os.getenv("RUN_LIVE_LLM_TESTS", "0").strip() == "1"
 

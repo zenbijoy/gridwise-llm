@@ -76,10 +76,13 @@ The system strictly enforces separation of concerns across four independent laye
 
 ---
 
+---
+
 ## 4. Local Quickstart
 
 ### Prerequisites
 - Python 3.11+
+- Node.js 20+ / 24+ & npm
 - Git
 
 ### Linux / macOS
@@ -87,9 +90,16 @@ The system strictly enforces separation of concerns across four independent laye
 git clone <repo-url>
 cd gridwise-llm
 
+# Backend setup
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# Frontend setup (optional for development, pre-built in dist)
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
 ### Windows (PowerShell)
@@ -97,9 +107,16 @@ pip install -r requirements.txt
 git clone <repo-url>
 cd gridwise-llm
 
+# Backend setup
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+
+# Frontend setup (optional for development, pre-built in dist)
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
 ---
@@ -122,23 +139,45 @@ GEMINI_API_KEY=your_gemini_api_key_here
 GROQ_API_KEY=
 OPENROUTER_API_KEY=
 ANTHROPIC_API_KEY=
+
+# Production Rate Limiting & Safety
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+MAX_REQUEST_BODY_SIZE_BYTES=1048576
 ```
 
-> **Note**: Unused provider keys can remain empty. The service starts cleanly without error even if keys are absent. An emergency deterministic fallback operates if the LLM provider experiences network downtime.
+> **Security Guarantee**: The Gemini API key remains strictly in the server environment. The frontend interacts **only** with FastAPI (`POST /optimize-energy`). No keys are ever exposed to browser JavaScript or stored client-side.
 
 ---
 
-## 6. Running the Service
+## 6. Running the Full-Stack Application
 
-### Development Server
+### Option A: Unified Server (Recommended)
+Since the React frontend is compiled into `frontend/dist`, the FastAPI server serves the complete web application and API together on port 8000:
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
+Open **[http://localhost:8000](http://localhost:8000)** in your browser to access the full GridWise interactive control center!
 
-### Production Endpoints
+### Option B: Frontend Development Server with HMR
+If you are modifying frontend components with hot module replacement:
+```bash
+# Terminal 1: Backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminal 2: Frontend
+cd frontend
+npm run dev
+```
+Open **[http://localhost:5173](http://localhost:5173)** (automatically proxies API requests to port 8000).
+
+---
+
+## 7. Production Endpoints
 
 | Method | Endpoint | Description | Auth / Rate Limit |
 |---|---|---|---|
+| `GET` | `/` | GridWise Energy Intelligence Web Dashboard (SPA) | Public |
 | `GET` | `/health` | Liveness probe returning `{"status": "ok"}` | No rate limit |
 | `GET` | `/ready` | Readiness probe returning `{"status": "ready"}` | No rate limit |
 | `GET` | `/docs` | Interactive Swagger API documentation | No rate limit |
