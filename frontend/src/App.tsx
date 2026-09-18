@@ -4,6 +4,7 @@ import { useTheme } from './hooks/useTheme';
 import { useHealthCheck } from './hooks/useHealthCheck';
 import { loadHistory, saveHistoryItem, clearHistory } from './utils/storage';
 import { optimizeEnergy, ApiError } from './services/api';
+import { Language, translations } from './utils/i18n';
 import {
   HourData,
   BatteryConfig,
@@ -31,11 +32,27 @@ import { ApiDocsModal } from './components/ApiDocsModal';
 import { LoadingOverlay } from './components/LoadingOverlay';
 
 // Icons
-import { AlertCircle, RefreshCw, Edit3 } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export function App() {
   const { theme, toggleTheme } = useTheme();
   const { status: healthStatus, refresh: refreshHealth } = useHealthCheck();
+
+  // Language state (defaulting to Bangla, with instantaneous toggle to English)
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('gridwise_lang');
+    return saved === 'en' || saved === 'bn' ? saved : 'bn';
+  });
+
+  const handleToggleLanguage = () => {
+    setLanguage((prev) => {
+      const next: Language = prev === 'en' ? 'bn' : 'en';
+      localStorage.setItem('gridwise_lang', next);
+      return next;
+    });
+  };
+
+  const t = translations[language];
 
   // Active scenario state (defaults to SAMPLE-01)
   const defaultPreset = SAMPLE_SCENARIOS[0];
@@ -96,14 +113,21 @@ export function App() {
 
   // Run Optimization pipeline
   const handleOptimize = async () => {
-    // Client-side validation
     const trimmedNotes = operatorNotes.map((n) => n.trim()).filter((n) => n.length > 0);
     if (trimmedNotes.length === 0) {
-      setErrorMsg('Please provide at least one valid operator note before optimizing.');
+      setErrorMsg(
+        language === 'bn'
+          ? 'অনুগ্রহ করে অপটিমাইজ করার আগে অন্তত একটি বৈধ অপারেটর নোট প্রদান করুন।'
+          : 'Please provide at least one valid operator note before optimizing.'
+      );
       return;
     }
     if (trimmedNotes.length > 3) {
-      setErrorMsg('A maximum of 3 operator notes is permitted per request.');
+      setErrorMsg(
+        language === 'bn'
+          ? 'প্রতি রিকোয়েস্টে সর্বোচ্চ ৩টি অপারেটর নোট দেওয়া যাবে।'
+          : 'A maximum of 3 operator notes is permitted per request.'
+      );
       return;
     }
 
@@ -124,7 +148,12 @@ export function App() {
       setHistory(updatedHistory);
     } catch (err: unknown) {
       const apiErr = err as ApiError;
-      setErrorMsg(apiErr.message || 'An unexpected error occurred during optimization.');
+      setErrorMsg(
+        apiErr.message ||
+          (language === 'bn'
+            ? 'অপটিমাইজেশনের সময় একটি অপ্রত্যাশিত সমস্যা ঘটেছে।'
+            : 'An unexpected error occurred during optimization.')
+      );
     } finally {
       setIsOptimizing(false);
     }
@@ -141,7 +170,7 @@ export function App() {
     setErrorMsg(null);
   };
 
-  // Handle section click from sidebar
+  // Handle section click
   const handleSelectSection = (section: NavSection) => {
     if (section === 'docs') {
       setApiDocsModalOpen(true);
@@ -156,7 +185,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
-      {/* Header */}
+      {/* Header & Sticky Top Navigation Bar */}
       <Header
         presets={SAMPLE_SCENARIOS}
         selectedPresetId={selectedPresetId}
@@ -165,14 +194,20 @@ export function App() {
         onRefreshHealth={refreshHealth}
         theme={theme}
         onToggleTheme={toggleTheme}
+        language={language}
+        onToggleLanguage={handleToggleLanguage}
+        activeSection={activeSection}
+        onSelectSection={handleSelectSection}
         onOptimize={handleOptimize}
         isOptimizing={isOptimizing}
         mobileMenuOpen={mobileMenuOpen}
         onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        hasResults={response !== null}
+        directiveCount={response?.directive_interpretation.filter((d) => d.applies).length || 0}
       />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        {/* Sidebar */}
+        {/* Left Sidebar Navigation */}
         <Sidebar
           activeSection={activeSection}
           onSelectSection={handleSelectSection}
@@ -180,17 +215,20 @@ export function App() {
           onCloseMobile={() => setMobileMenuOpen(false)}
           hasResults={response !== null}
           directiveCount={response?.directive_interpretation.filter((d) => d.applies).length || 0}
+          language={language}
         />
 
         {/* Main Workspace */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
           {/* Error Banner */}
           {errorMsg && (
-            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-start justify-between gap-3 text-xs text-rose-800 dark:text-rose-200 shadow-sm animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-start justify-between gap-3 text-xs text-rose-800 dark:text-rose-200 shadow-sm animate-in fade-in">
               <div className="flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <div className="font-bold">Optimization Failed</div>
+                  <div className="font-bold text-sm">
+                    {language === 'bn' ? 'অপটিমাইজেশন ব্যর্থ হয়েছে' : 'Optimization Failed'}
+                  </div>
                   <p className="leading-relaxed">{errorMsg}</p>
                 </div>
               </div>
@@ -199,21 +237,26 @@ export function App() {
                 <button
                   type="button"
                   onClick={handleOptimize}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition-all shadow-sm active:scale-95"
                 >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Retry</span>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>{language === 'bn' ? 'পুনরায় চেষ্টা' : 'Retry'}</span>
                 </button>
               </div>
             </div>
           )}
 
           {/* Top Metric Cards */}
-          <MetricCards response={response} hours={hours} isOptimizing={isOptimizing} />
+          <MetricCards
+            response={response}
+            hours={hours}
+            isOptimizing={isOptimizing}
+            language={language}
+          />
 
           {/* Conditional / Multi-view content based on active section */}
           {activeSection === 'dashboard' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-200">
               {/* Energy Dispatch Chart */}
               <EnergyChart response={response} hours={hours} />
 
@@ -233,24 +276,30 @@ export function App() {
                     setOperatorNotes(val);
                     setSelectedPresetId('custom');
                   }}
+                  language={language}
                 />
 
-                <BatteryPanel battery={battery} onChangeBattery={handleBatteryChange} />
+                <BatteryPanel
+                  battery={battery}
+                  onChangeBattery={handleBatteryChange}
+                  language={language}
+                />
               </div>
 
               {/* AI Operator Interpretation */}
               <InterpretationView
                 interpretations={response?.directive_interpretation || null}
                 operatorNotes={operatorNotes}
+                language={language}
               />
 
               {/* Results & Schedule */}
-              <ResultsView response={response} hours={hours} />
+              <ResultsView response={response} hours={hours} language={language} />
             </div>
           )}
 
           {activeSection === 'scenario' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-200">
               <ScenarioEditor
                 scenarioId={scenarioId}
                 onChangeScenarioId={(val) => {
@@ -262,46 +311,57 @@ export function App() {
                   setOperatorNotes(val);
                   setSelectedPresetId('custom');
                 }}
+                language={language}
               />
               <InterpretationView
                 interpretations={response?.directive_interpretation || null}
                 operatorNotes={operatorNotes}
+                language={language}
               />
             </div>
           )}
 
           {activeSection === 'matrix' && (
-            <EnergyTable
-              hours={hours}
-              onChangeHour={handleHourChange}
-              onReset={handleResetHours}
-              onOpenJsonModal={() => setJsonModalOpen(true)}
-            />
+            <div className="animate-in fade-in duration-200">
+              <EnergyTable
+                hours={hours}
+                onChangeHour={handleHourChange}
+                onReset={handleResetHours}
+                onOpenJsonModal={() => setJsonModalOpen(true)}
+              />
+            </div>
           )}
 
           {activeSection === 'battery' && (
-            <div className="space-y-6">
-              <BatteryPanel battery={battery} onChangeBattery={handleBatteryChange} />
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <BatteryPanel
+                battery={battery}
+                onChangeBattery={handleBatteryChange}
+                language={language}
+              />
               <BatterySocChart response={response} battery={battery} />
             </div>
           )}
 
           {activeSection === 'directives' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-200">
               <DirectiveTimeline interpretations={response?.directive_interpretation || null} />
               <InterpretationView
                 interpretations={response?.directive_interpretation || null}
                 operatorNotes={operatorNotes}
+                language={language}
               />
             </div>
           )}
 
           {activeSection === 'results' && (
-            <ResultsView response={response} hours={hours} />
+            <div className="animate-in fade-in duration-200">
+              <ResultsView response={response} hours={hours} language={language} />
+            </div>
           )}
 
           {activeSection === 'charts' && (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-200">
               <EnergyChart response={response} hours={hours} />
               <TariffChart hours={hours} />
               <BatterySocChart response={response} battery={battery} />
