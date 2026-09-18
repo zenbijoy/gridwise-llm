@@ -114,6 +114,73 @@ export interface Translations {
   exportJson: string;
   viewRawJson: string;
 
+  // Top Navbar Center
+  navTopDashboard: string;
+  navTopOperations: string;
+  navTopAnalytics: string;
+  navTopOptimization: string;
+  navTopReports: string;
+
+  // Hero Section
+  heroGreetingMorning: string;
+  heroGreetingAfternoon: string;
+  heroGreetingEvening: string;
+  heroGreetingNight: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  systemStatusLabel: string;
+  lastUpdatedLabel: string;
+  refreshTooltip: string;
+
+  // Energy Flow Centerpiece
+  energyFlowTitle: string;
+  energyFlowSubtitle: string;
+  solarFlowLabel: string;
+  gridFlowLabel: string;
+  campusLoadLabel: string;
+  batteryFlowLabel: string;
+  flowSpeedLabel: string;
+  generatingBadge: string;
+  importingBadge: string;
+  chargingBadge: string;
+  dischargingBadge: string;
+  standbyBadge: string;
+
+  // System Health
+  systemHealthTitle: string;
+  systemHealthSubtitle: string;
+  gridHealth: string;
+  solarHealth: string;
+  batteryHealth: string;
+  optimizerHealth: string;
+  llmHealth: string;
+
+  // AI Energy Intelligence
+  aiIntelligenceTitle: string;
+  aiDefaultInsight: string;
+  potentialSavingLabel: string;
+  gridReductionLabel: string;
+  carbonReductionLabel: string;
+  viewAiAnalysisBtn: string;
+
+  // Optimization Action Card
+  readyToOptimizeTitle: string;
+  readyToOptimizeDesc: string;
+  runOptimizationBtn: string;
+  stepAnalyzingDemand: string;
+  stepForecastingSolar: string;
+  stepOptimizingBattery: string;
+  stepCalculatingGrid: string;
+  stepGeneratingSchedule: string;
+  stepOptimizationComplete: string;
+
+  // Notifications
+  notificationsTitle: string;
+  noNewNotifications: string;
+  noticePeakTariff: string;
+  noticeSolarPeak: string;
+  noticeAuditPassed: string;
+
   // Footer & Info
   systemArchitecture: string;
   optimizerEngine: string;
@@ -226,6 +293,74 @@ export const translations: Record<Language, Translations> = {
     exportJson: 'Export JSON',
     viewRawJson: 'View JSON Raw Data',
 
+    // Top Navbar Center
+    navTopDashboard: 'Dashboard',
+    navTopOperations: 'Operations',
+    navTopAnalytics: 'Analytics',
+    navTopOptimization: 'Optimization',
+    navTopReports: 'Reports',
+
+    // Hero Section
+    heroGreetingMorning: 'Good morning',
+    heroGreetingAfternoon: 'Good afternoon',
+    heroGreetingEvening: 'Good evening',
+    heroGreetingNight: 'Good evening',
+    heroTitle: 'Campus Energy Intelligence Center',
+    heroSubtitle: 'Real-time 24-hour microgrid optimization, solar utilization & battery scheduling',
+    systemStatusLabel: 'System Status',
+    lastUpdatedLabel: 'Last updated',
+    refreshTooltip: 'Refresh microgrid telemetry',
+
+    // Energy Flow Centerpiece
+    energyFlowTitle: 'Live Energy Flow',
+    energyFlowSubtitle: 'Interactive real-time campus microgrid dispatch topology',
+    solarFlowLabel: 'Solar PV Array',
+    gridFlowLabel: 'Utility Grid',
+    campusLoadLabel: 'Campus Load',
+    batteryFlowLabel: 'Battery Storage',
+    flowSpeedLabel: 'Flow active',
+    generatingBadge: 'Generating',
+    importingBadge: 'Importing',
+    chargingBadge: 'Charging',
+    dischargingBadge: 'Discharging',
+    standbyBadge: 'Standby',
+
+    // System Health
+    systemHealthTitle: 'System Health',
+    systemHealthSubtitle: 'Real-time telemetry & service connectivity',
+    gridHealth: 'GRID',
+    solarHealth: 'SOLAR',
+    batteryHealth: 'BATTERY',
+    optimizerHealth: 'OPTIMIZER',
+    llmHealth: 'LLM ENGINE',
+
+    // AI Energy Intelligence
+    aiIntelligenceTitle: 'AI Energy Intelligence',
+    aiDefaultInsight: 'Solar generation is projected to peak around 12:00–14:00. Pre-charging BESS during off-peak hours and utilizing peak solar will minimize peak evening tariff penalties.',
+    potentialSavingLabel: 'Potential Saving',
+    gridReductionLabel: 'Grid Reduction',
+    carbonReductionLabel: 'CO₂ Avoided',
+    viewAiAnalysisBtn: 'View AI Analysis →',
+
+    // Optimization Action Card
+    readyToOptimizeTitle: 'Ready to Optimize?',
+    readyToOptimizeDesc: 'Execute high-precision 24-hour Linear Programming (PuLP + CBC) with Gemini AI guardrail verification.',
+    runOptimizationBtn: '⚡ Run Optimization',
+    stepAnalyzingDemand: 'Analyzing demand & tariff profiles...',
+    stepForecastingSolar: 'Forecasting solar generation curve...',
+    stepOptimizingBattery: 'Optimizing battery charge/discharge vectors...',
+    stepCalculatingGrid: 'Calculating optimal grid power purchase...',
+    stepGeneratingSchedule: 'Generating provably minimal cost schedule...',
+    stepOptimizationComplete: 'Optimization Complete ✓',
+
+    // Notifications
+    notificationsTitle: 'Live System Notifications',
+    noNewNotifications: 'No active warnings or alerts.',
+    noticePeakTariff: 'Peak grid tariff window (BDT 14.50/kWh) active from 17:00 to 22:00.',
+    noticeSolarPeak: 'Forecasted solar generation exceeds campus daytime baseline demand.',
+    noticeAuditPassed: 'Mathematical replay audit passed with 100% balance validation.',
+
+    // Footer & Info
     systemArchitecture: 'Microgrid Operations',
     optimizerEngine: 'PuLP + CBC LP',
     llmInterpreter: 'Gemini 2.5 Flash',
@@ -334,6 +469,73 @@ export const translations: Record<Language, Translations> = {
     batteryEnergyAfter: 'অবশিষ্ট চার্জ (kWh)',
     exportJson: 'JSON ডাউনলোড',
     viewRawJson: 'JSON ডাটা দেখুন',
+
+    // Top Navbar Center
+    navTopDashboard: 'ড্যাশবোর্ড',
+    navTopOperations: 'অপারেশনস',
+    navTopAnalytics: 'অ্যানালিটিক্স',
+    navTopOptimization: 'অপটিমাইজেশন',
+    navTopReports: 'রিপোর্টস',
+
+    // Hero Section
+    heroGreetingMorning: 'শুভ সকাল',
+    heroGreetingAfternoon: 'শুভ দুপুর',
+    heroGreetingEvening: 'শুভ সন্ধ্যা',
+    heroGreetingNight: 'শুভ রাত্রি',
+    heroTitle: 'ক্যাম্পাস এনার্জি ইন্টেলিজেন্স সেন্টার',
+    heroSubtitle: 'রিয়েল-টাইম ২৪ ঘণ্টার মাইক্রোগ্রিড অপটিমাইজেশন, সোলার ব্যবহার ও ব্যাটারি শিডিউলিং',
+    systemStatusLabel: 'সিস্টেম স্ট্যাটাস',
+    lastUpdatedLabel: 'সর্বশেষ আপডেট',
+    refreshTooltip: 'মাইক্রোগ্রিড ডাটা রিফ্রেশ করুন',
+
+    // Energy Flow Centerpiece
+    energyFlowTitle: 'লাইভ এনার্জি ফ্লো',
+    energyFlowSubtitle: 'ক্যাম্পাস মাইক্রোগ্রিড পাওয়ার ট্রান্সফার ও ডিরেকশন ট্র্যাকিং',
+    solarFlowLabel: 'সোলার পিভি অ্যারে',
+    gridFlowLabel: 'জাতীয় গ্রিড',
+    campusLoadLabel: 'ক্যাম্পাস মোট চাহিদা',
+    batteryFlowLabel: 'ব্যাটারি স্টোরেজ (BESS)',
+    flowSpeedLabel: 'প্রবাহ সক্রিয়',
+    generatingBadge: 'উৎপাদনরত',
+    importingBadge: 'গ্রিড থেকে আমদানি',
+    chargingBadge: 'চার্জ হচ্ছে',
+    dischargingBadge: 'ডিসচার্জ হচ্ছে',
+    standbyBadge: 'স্ট্যান্ডবাই',
+
+    // System Health
+    systemHealthTitle: 'সিস্টেম হেলথ',
+    systemHealthSubtitle: 'সার্ভিস সংযোগ ও রিয়েল-টাইম টেলিমিতি',
+    gridHealth: 'গ্রিড (GRID)',
+    solarHealth: 'সোলার (SOLAR)',
+    batteryHealth: 'ব্যাটারি (BATTERY)',
+    optimizerHealth: 'সলভার (OPTIMIZER)',
+    llmHealth: 'এআই ইঞ্জিন (LLM)',
+
+    // AI Energy Intelligence
+    aiIntelligenceTitle: 'এআই এনার্জি ইন্টেলিজেন্স',
+    aiDefaultInsight: 'দুপুর ১২:০০ থেকে ১৪:০০ ঘটিকায় সৌরবিদ্যুৎ উৎপাদন শীর্ষে পৌঁছাবে। অফ-পিক সময়ে ব্যাটারি চার্জ করে রাখলে সন্ধ্যার পিক আওয়ারে গ্রিডের চড়া মূল্য এড়ানো সম্ভব হবে।',
+    potentialSavingLabel: 'সম্ভাব্য সাশ্রয়',
+    gridReductionLabel: 'গ্রিড হ্রাস',
+    carbonReductionLabel: 'CO₂ নির্গমন হ্রাস',
+    viewAiAnalysisBtn: 'এআই অ্যানালাইসিস দেখুন →',
+
+    // Optimization Action Card
+    readyToOptimizeTitle: 'অপটিমাইজ করতে প্রস্তুত?',
+    readyToOptimizeDesc: 'লিনিয়ার প্রোগ্রামিং (PuLP + CBC) এবং জেমিনি এআই গার্ডরেল ভেরিফিকেশনের মাধ্যমে সর্বনিম্ন খরচের শিডিউল তৈরি করুন।',
+    runOptimizationBtn: '⚡ অপটিমাইজ করুন',
+    stepAnalyzingDemand: 'চাহিদা ও ট্যারিফ প্রোফাইল বিশ্লেষণ হচ্ছে...',
+    stepForecastingSolar: 'সৌরবিদ্যুৎ উৎপাদন কার্ভ প্রক্ষেপণ হচ্ছে...',
+    stepOptimizingBattery: 'ব্যাটারি চার্জ/ডিসচার্জ ভেক্টর নির্ণয় হচ্ছে...',
+    stepCalculatingGrid: 'গ্রিড বিদ্যুৎ ক্রয়ের পরিমাণ অপটিমাইজ হচ্ছে...',
+    stepGeneratingSchedule: 'সর্বনিম্ন খরচের চূড়ান্ত শিডিউল তৈরি হচ্ছে...',
+    stepOptimizationComplete: 'অপটিমাইজেশন সম্পন্ন হয়েছে ✓',
+
+    // Notifications
+    notificationsTitle: 'সিস্টেম নোটিফিকেশন',
+    noNewNotifications: 'কোনো নতুন সতর্কতা বা বার্তা নেই।',
+    noticePeakTariff: 'পিক আওয়ার ট্যারিফ (১৪.৫০ টাকা/kWh) সক্রিয় সময়: ১৭:০০ হতে ২২:০০।',
+    noticeSolarPeak: 'পূর্বাভাসকৃত সৌর উৎপাদন ক্যাম্পাসের বেসলাইন চাহিদার চেয়ে বেশি।',
+    noticeAuditPassed: 'স্বাধীন রিপ্লে ভেরিফিকেশন ১০০% ফিজিক্স ব্যালেন্স পাস করেছে।',
 
     systemArchitecture: 'মাইক্রোগ্রিড অপারেশনস',
     optimizerEngine: 'PuLP + CBC LP সলভার',

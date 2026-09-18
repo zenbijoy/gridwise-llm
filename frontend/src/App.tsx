@@ -17,7 +17,12 @@ import {
 import { Header } from './components/Header';
 import { MenuBar } from './components/MenuBar';
 import { Sidebar, NavSection } from './components/Sidebar';
+import { HeroSection } from './components/HeroSection';
 import { MetricCards } from './components/MetricCards';
+import { EnergyFlowDiagram } from './components/EnergyFlowDiagram';
+import { SystemHealthPanel } from './components/SystemHealthPanel';
+import { AiInsightPanel } from './components/AiInsightPanel';
+import { OptimizationActionCard } from './components/OptimizationActionCard';
 import { ScenarioEditor } from './components/ScenarioEditor';
 import { BatteryPanel } from './components/BatteryPanel';
 import { EnergyTable } from './components/EnergyTable';
@@ -222,6 +227,8 @@ export function App() {
         mobileMenuOpen={mobileMenuOpen}
         onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
         solveDurationMs={solveDurationMs}
+        activeSection={activeSection}
+        onSelectSection={handleSelectSection}
       />
 
       {/* Professional Desktop/App Menu Bar */}
@@ -258,6 +265,14 @@ export function App() {
 
         {/* Main Workspace */}
         <main className="flex-1 p-3 sm:p-6 lg:p-8 space-y-6 overflow-x-hidden">
+          {/* Dashboard Hero Section */}
+          <HeroSection
+            language={language}
+            response={response}
+            onRefresh={refreshHealth}
+            isOptimizing={isOptimizing}
+          />
+
           {/* Error Banner */}
           {errorMsg && (
             <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 flex items-start justify-between gap-3 text-xs text-rose-800 dark:text-rose-200 shadow-sm animate-in fade-in">
@@ -295,6 +310,40 @@ export function App() {
           {/* Conditional / Multi-view content based on active section */}
           {activeSection === 'dashboard' && (
             <div className="space-y-6 animate-in fade-in duration-200">
+              {/* Prominent Optimization Action Card */}
+              <OptimizationActionCard
+                language={language}
+                onOptimize={handleOptimize}
+                isOptimizing={isOptimizing}
+                response={response}
+                solveDurationMs={solveDurationMs}
+              />
+
+              {/* Centerpiece: Live Animated Energy Flow Diagram */}
+              <EnergyFlowDiagram
+                response={response}
+                hours={hours}
+                language={language}
+              />
+
+              {/* 2-Column Grid: System Health & AI Energy Intelligence */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SystemHealthPanel
+                  language={language}
+                  healthStatus={healthStatus}
+                  response={response}
+                  hours={hours}
+                  isOptimizing={isOptimizing}
+                />
+
+                <AiInsightPanel
+                  language={language}
+                  response={response}
+                  hours={hours}
+                  onViewAnalysis={() => handleSelectSection('directives')}
+                />
+              </div>
+
               {/* Energy Dispatch Chart */}
               <EnergyChart response={response} hours={hours} />
 
