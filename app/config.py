@@ -36,9 +36,18 @@ DEFAULT_MODELS = {
     "anthropic": "claude-3-5-haiku-20241022",
 }
 
+# Production Rate Limiting & Safety
+RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").strip().lower() == "true"
+RATE_LIMIT_REQUESTS_PER_MINUTE = int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "60"))
+MAX_REQUEST_BODY_SIZE_BYTES = int(os.getenv("MAX_REQUEST_BODY_SIZE_BYTES", "1048576"))  # 1 MB
+
+# Live testing flag
+RUN_LIVE_LLM_TESTS = os.getenv("RUN_LIVE_LLM_TESTS", "0").strip() == "1"
+
 
 def get_active_model() -> str:
     """Return the configured model name or the recommended default for the provider."""
     if LLM_MODEL:
         return LLM_MODEL
     return DEFAULT_MODELS.get(LLM_PROVIDER, "gemini-2.5-flash")
+

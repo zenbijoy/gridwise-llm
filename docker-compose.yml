@@ -1,0 +1,26 @@
+services:
+  gridwise:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gridwise-llm:latest
+    container_name: gridwise
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - PORT=8000
+    ports:
+      # Kept internal behind Nginx reverse proxy on the host
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

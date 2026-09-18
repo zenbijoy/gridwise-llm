@@ -29,6 +29,34 @@ def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+    assert "X-Request-ID" in response.headers
+
+
+def test_ready_endpoint():
+    response = client.get("/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+    assert "X-Request-ID" in response.headers
+
+
+def test_request_id_propagation():
+    custom_id = "custom-trace-uuid-12345"
+    response = client.get("/health", headers={"X-Request-ID": custom_id})
+    assert response.status_code == 200
+    assert response.headers.get("X-Request-ID") == custom_id
+
+
+def test_request_body_size_limit():
+    large_payload = make_valid_payload()
+    # Artificially simulate oversized content length
+    response = client.post(
+        "/optimize-energy",
+        json=large_payload,
+        headers={"Content-Length": "2000000"},  # 2MB exceeds 1MB limit
+    )
+    assert response.status_code == 400
+    assert "exceeds limit" in response.json().get("detail", "")
+
 
 
 def test_valid_optimize_energy_request():

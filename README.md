@@ -130,22 +130,49 @@ ANTHROPIC_API_KEY=
 
 ## 6. Running the Service
 
+### Development Server
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### Health Check
+### Production Endpoints
+
+| Method | Endpoint | Description | Auth / Rate Limit |
+|---|---|---|---|
+| `GET` | `/health` | Liveness probe returning `{"status": "ok"}` | No rate limit |
+| `GET` | `/ready` | Readiness probe returning `{"status": "ready"}` | No rate limit |
+| `GET` | `/docs` | Interactive Swagger API documentation | No rate limit |
+| `GET` | `/redoc` | ReDoc API documentation | No rate limit |
+| `POST` | `/optimize-energy` | Full 24-hour microgrid energy optimization pipeline | Rate limited (60 req/min) |
+
+#### Liveness & Readiness Probes
 ```bash
 curl http://localhost:8000/health
-```
-Response:
-```json
-{"status": "ok"}
+# {"status": "ok"}
+
+curl http://localhost:8000/ready
+# {"status": "ready"}
 ```
 
 ---
 
-## 7. Optimization API Example (SAMPLE-01)
+## 7. Rate Limiting & Safety Guardrails
+
+- **Sliding-Window Rate Limiter**: `POST /optimize-energy` is protected by a thread-safe in-memory sliding-window limiter (default `60` requests/minute per client IP).
+  - Health (`/health`) and readiness (`/ready`) endpoints are strictly exempt from rate limiting.
+  - When the threshold is exceeded, the server responds with **HTTP 429 Too Many Requests**, a `Retry-After: <seconds>` header, and a JSON body:
+    ```json
+    {
+      "error": "rate_limit_exceeded",
+      "message": "Rate limit exceeded. Try again in 42 seconds."
+    }
+    ```
+- **Request Body Size Limit**: Incoming request bodies are capped at 1 MB (`MAX_REQUEST_BODY_SIZE_BYTES=1048576`). Payloads exceeding this limit receive **HTTP 413 Payload Too Large**.
+- **Correlation ID Tracking**: All incoming requests accept or automatically receive a unique `X-Request-ID` header, which is propagated through all structured log records and returned in HTTP responses.
+
+---
+
+## 8. Optimization API Example (SAMPLE-01)
 
 ```bash
 curl -X POST http://localhost:8000/optimize-energy \
@@ -194,9 +221,9 @@ curl -X POST http://localhost:8000/optimize-energy \
 
 ---
 
-## 8. Running the Automated Test Suite
+## 9. Running the Automated Test Suite
 
-Run all unit, integration, optimizer, and sample tests:
+Run the full verification suite (68 tests across all modules):
 ```bash
 pytest -v
 ```
@@ -205,40 +232,66 @@ pytest -v
 1. `tests/test_guardrails.py` — Sanitization, hours validation, reserve bounds, and index repair.
 2. `tests/test_optimizer.py` — All 14 LP operational cases (arbitrage, restrictions, bounds, neutrality).
 3. `tests/test_replay.py` — Fail-closed rejection of tampered energy balances or limits.
-4. `tests/test_greedy_vs_lp.py` — Demonstration of mathematical cost superiority of LP over greedy heuristics.
+4. `tests/test_greedy_vs_lp.py` — Mathematical proof of cost superiority of LP over greedy heuristics.
 5. `tests/test_public_samples.py` — All 10 official public sample cases matching reference costs within $\pm 0.01$ BDT.
 6. `tests/test_llm_paraphrase.py` — Robustness across natural language phrasings.
-7. `tests/test_api.py` — HTTP contract, Pydantic validation, and error code verification.
-8. `tests/test_randomized.py` — Property-based stress testing under randomized inputs.
+7. `tests/test_rate_limit.py` — Unit & integration tests for rate limiting, retry headers, and health/ready exemptions.
+8. `tests/test_api.py` — HTTP contract, Pydantic validation, error codes, request ID, and body size limits.
+9. `tests/test_randomized.py` — Property-based stress testing under randomized inputs.
 
 ---
 
-## 9. Docker Deployment
+## 10. Docker & Compose Deployment
 
-### Build Image
-```bash
-docker build -t gridwise-llm:latest .
-```
+The service is packaged using a multi-stage, hardened Docker image based on `python:3.11-slim`:
+- Non-root user execution (`appuser:appuser`, UID 10001).
+- Native COIN-OR CBC linear programming solver installed.
+- Integrated Docker `HEALTHCHECK` querying `/health`.
+- Dynamic `PORT` environment variable support.
 
-### Run Container
+### Running with Docker Compose (Recommended)
 ```bash
-docker run -d \
-  -p 8000:8000 \
-  -e LLM_PROVIDER=gemini \
-  -e GEMINI_API_KEY=YOUR_API_KEY \
-  --name gridwise-service \
-  gridwise-llm:latest
-```
+# 1. Prepare environment
+cp .env.example .env
+nano .env  # configure GEMINI_API_KEY
 
-Check logs and health:
-```bash
+# 2. Build and start service in background
+docker compose up -d --build
+
+# 3. View real-time logs
+docker compose logs -f
+
+# 4. Check service health
+docker compose ps
 curl http://localhost:8000/health
 ```
 
 ---
 
-## 10. Security & Compliance
+## 11. Linux VPS Production Deployment (Nginx + SSL)
+
+For complete end-to-end instructions on provisioning an Ubuntu/Debian Linux VPS, see the [VPS Runbook](deploy/README.md).
+
+### Quick Summary:
+1. **Automated Host Setup**: Run the idempotent setup script to install Docker, Docker Compose, Nginx, and configure UFW firewall:
+   ```bash
+   sudo bash deploy/setup.sh
+   ```
+2. **Reverse Proxy Configuration**: Copy `deploy/nginx/gridwise.conf` to `/etc/nginx/sites-available/gridwise.conf`, substitute your domain name, and symlink to `sites-enabled/`.
+3. **Free HTTPS via Certbot**:
+   ```bash
+   sudo certbot --nginx -d your-domain.com
+   ```
+4. **Launch Application**:
+   ```bash
+   docker compose up -d --build
+   ```
+
+---
+
+## 12. Security & Compliance
 
 - **No Secrets in Code or Logs**: API keys, tokens, and authorization headers are never logged or returned in responses.
 - **Fail-Closed Design**: Malformed requests return HTTP 400. Internal or solver errors return HTTP 500 `{"error": "internal_error"}` without exposing tracebacks.
+- **Defense in Depth**: Non-root container process, internal loopback binding (`127.0.0.1:8000`), Nginx reverse proxy with TLS 1.2/1.3, rate limiting, and request payload bounds.
 - **Dependency Credit**: Built with FastAPI, Uvicorn, Pydantic v2, PuLP, and COIN-OR CBC solver.
