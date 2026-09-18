@@ -14,6 +14,21 @@ export interface Translations {
   language: string;
   themeToggle: string;
 
+  // Real-time Timer
+  liveTime: string;
+  operationalHour: string;
+  peakHour: string;
+  offPeakHour: string;
+  solveDuration: string;
+
+  // Menu Bar
+  menuFile: string;
+  menuOperations: string;
+  menuView: string;
+  menuLanguage: string;
+  menuTools: string;
+  menuHelp: string;
+
   // Navigation Items
   navDashboard: string;
   navScenario: string;
@@ -120,6 +135,19 @@ export const translations: Record<Language, Translations> = {
     language: 'Language',
     themeToggle: 'Toggle Theme',
 
+    liveTime: 'Live Time',
+    operationalHour: 'Current Hour',
+    peakHour: 'Peak Tariff',
+    offPeakHour: 'Off-Peak Tariff',
+    solveDuration: 'Solve Duration',
+
+    menuFile: 'File',
+    menuOperations: 'Operations',
+    menuView: 'View',
+    menuLanguage: 'Language',
+    menuTools: 'Tools',
+    menuHelp: 'Help',
+
     navDashboard: 'Dashboard Overview',
     navScenario: 'Scenario & Notes',
     navMatrix: '24-Hour Energy Data',
@@ -215,6 +243,19 @@ export const translations: Record<Language, Translations> = {
     optimizing: 'অপটিমাইজ হচ্ছে...',
     language: 'ভাষা',
     themeToggle: 'থিম পরিবর্তন',
+
+    liveTime: 'লাইভ সময়',
+    operationalHour: 'চলতি সময়সীমা',
+    peakHour: 'পিক আওয়ার (উচ্চ মূল্য)',
+    offPeakHour: 'অফ-পিক আওয়ার (স্বাভাবিক মূল্য)',
+    solveDuration: 'সমাধান সময়',
+
+    menuFile: 'ফাইল (File)',
+    menuOperations: 'অপারেশন (Operations)',
+    menuView: 'ভিউ (View)',
+    menuLanguage: 'ভাষা (Language)',
+    menuTools: 'টুলস (Tools)',
+    menuHelp: 'সাহায্য (Help)',
 
     navDashboard: 'ড্যাশবোর্ড ওভারভিউ',
     navScenario: 'সিনারিও ও নোট',

@@ -15,6 +15,7 @@ import {
 
 // Components
 import { Header } from './components/Header';
+import { MenuBar } from './components/MenuBar';
 import { Sidebar, NavSection } from './components/Sidebar';
 import { MetricCards } from './components/MetricCards';
 import { ScenarioEditor } from './components/ScenarioEditor';
@@ -52,6 +53,11 @@ export function App() {
     });
   };
 
+  const handleSelectLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem('gridwise_lang', lang);
+  };
+
   const t = translations[language];
 
   // Active scenario state (defaults to SAMPLE-01)
@@ -62,9 +68,10 @@ export function App() {
   const [hours, setHours] = useState<HourData[]>(defaultPreset.input.hours);
   const [battery, setBattery] = useState<BatteryConfig>(defaultPreset.input.battery);
 
-  // Optimization state
+  // Optimization state & timing
   const [response, setResponse] = useState<OptimizeResponse | null>(null);
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
+  const [solveDurationMs, setSolveDurationMs] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Navigation & Drawer states
@@ -111,7 +118,7 @@ export function App() {
     setSelectedPresetId('custom');
   };
 
-  // Run Optimization pipeline
+  // Run Optimization pipeline with high-resolution duration measurement
   const handleOptimize = async () => {
     const trimmedNotes = operatorNotes.map((n) => n.trim()).filter((n) => n.length > 0);
     if (trimmedNotes.length === 0) {
@@ -140,9 +147,11 @@ export function App() {
 
     setIsOptimizing(true);
     setErrorMsg(null);
+    const startTime = Date.now();
 
     try {
       const result = await optimizeEnergy(payload);
+      setSolveDurationMs(Date.now() - startTime);
       setResponse(result);
       const updatedHistory = saveHistoryItem(payload, result);
       setHistory(updatedHistory);
@@ -157,6 +166,18 @@ export function App() {
     } finally {
       setIsOptimizing(false);
     }
+  };
+
+  // Export current solution JSON
+  const handleExportJson = () => {
+    if (!response) return;
+    const blob = new Blob([JSON.stringify(response, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gridwise-${scenarioId.toLowerCase()}-optimal.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Restore previous run from history
@@ -185,7 +206,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans transition-colors">
-      {/* Header & Sticky Top Navigation Bar */}
+      {/* Top Header Bar */}
       <Header
         presets={SAMPLE_SCENARIOS}
         selectedPresetId={selectedPresetId}
@@ -196,14 +217,31 @@ export function App() {
         onToggleTheme={toggleTheme}
         language={language}
         onToggleLanguage={handleToggleLanguage}
-        activeSection={activeSection}
-        onSelectSection={handleSelectSection}
         onOptimize={handleOptimize}
         isOptimizing={isOptimizing}
         mobileMenuOpen={mobileMenuOpen}
         onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        solveDurationMs={solveDurationMs}
+      />
+
+      {/* Professional Desktop/App Menu Bar */}
+      <MenuBar
+        language={language}
+        onSelectLanguage={handleSelectLanguage}
+        activeSection={activeSection}
+        onSelectSection={handleSelectSection}
+        onSelectPreset={handleSelectPreset}
+        onOptimize={handleOptimize}
+        isOptimizing={isOptimizing}
+        onRefreshHealth={refreshHealth}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onOpenJsonModal={() => setJsonModalOpen(true)}
+        onOpenHistory={() => setHistoryDrawerOpen(true)}
+        onOpenApiDocs={() => setApiDocsModalOpen(true)}
+        onResetHours={handleResetHours}
         hasResults={response !== null}
-        directiveCount={response?.directive_interpretation.filter((d) => d.applies).length || 0}
+        onExportJson={handleExportJson}
       />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
