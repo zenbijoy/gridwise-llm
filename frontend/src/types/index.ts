@@ -44,12 +44,14 @@ export interface DirectiveInterpretation {
   explanation: string;
 }
 
+export type BatteryAction = 'charge' | 'discharge' | 'idle';
+
 export interface HourlyPlan {
   hour: number;
   grid_kwh: number;
   solar_used_kwh: number;
-  battery_charge_kwh: number;
-  battery_discharge_kwh: number;
+  battery_action: BatteryAction;
+  battery_kwh: number;
   battery_energy_after_kwh: number;
 }
 

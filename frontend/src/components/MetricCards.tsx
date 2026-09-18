@@ -18,7 +18,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ response, hours, isOpt
   if (response) {
     solarUsed = response.hourly_plan.reduce((sum, p) => sum + p.solar_used_kwh, 0);
     batteryThroughput = response.hourly_plan.reduce(
-      (sum, p) => sum + p.battery_charge_kwh + p.battery_discharge_kwh,
+      (sum, p) => sum + p.battery_kwh,
       0
     );
   }

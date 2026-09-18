@@ -19,7 +19,13 @@ interface EnergyChartProps {
 export const EnergyChart: React.FC<EnergyChartProps> = ({ response, hours }) => {
   const chartData = hours.map((h, idx) => {
     const plan = response?.hourly_plan[idx];
-    const batteryNet = plan ? plan.battery_charge_kwh - plan.battery_discharge_kwh : 0;
+    const batteryNet = plan
+      ? plan.battery_action === 'charge'
+        ? plan.battery_kwh
+        : plan.battery_action === 'discharge'
+        ? -plan.battery_kwh
+        : 0
+      : 0;
 
     return {
       hour: `${h.hour.toString().padStart(2, '0')}:00`,

@@ -79,8 +79,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ response, hours }) => 
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-[11px]">
             {response.hourly_plan.map((p, idx) => {
               const d = hours[idx]?.demand_kwh ?? 0;
-              const isCharging = p.battery_charge_kwh > 0.01;
-              const isDischarging = p.battery_discharge_kwh > 0.01;
+              const isCharging = p.battery_action === 'charge';
+              const isDischarging = p.battery_action === 'discharge';
 
               return (
                 <tr key={p.hour} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
@@ -114,9 +114,9 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ response, hours }) => 
                   {/* Rate */}
                   <td className="py-2 px-3">
                     {isCharging ? (
-                      <span className="text-emerald-600 dark:text-emerald-400">+{p.battery_charge_kwh.toFixed(1)}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">+{p.battery_kwh.toFixed(1)}</span>
                     ) : isDischarging ? (
-                      <span className="text-purple-600 dark:text-purple-400">-{p.battery_discharge_kwh.toFixed(1)}</span>
+                      <span className="text-purple-600 dark:text-purple-400">-{p.battery_kwh.toFixed(1)}</span>
                     ) : (
                       <span className="text-slate-400">0.0</span>
                     )}
