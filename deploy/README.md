@@ -24,16 +24,15 @@ Comprehensive, step-by-step guide for deploying GridWise LLM on a fresh **Ubuntu
 
 ---
 
-## Step 1: DNS Configuration
-Before configuring SSL, point a **DNS A Record** from your domain/subdomain to your VPS public IPv4:
-
-| Type | Name | Value | TTL |
-|---|---|---|---|
-| A | `gridwise` (or `@`) | `YOUR_VPS_IP` | 300 / Auto |
-
-Wait 1–2 minutes and verify that DNS resolves:
+## Step 1: DuckDNS Configuration
+Your domain is **`gridwise.duckdns.org`**. In your DuckDNS dashboard:
+1. Log in to [DuckDNS](https://www.duckdns.org/).
+2. Under the domain `gridwise`, enter your **VPS Public IPv4 address** in the `current ip` box and click **update ip**.
+3. Verify that the DNS resolves to your VPS IP:
 ```bash
-ping YOUR_DOMAIN
+ping gridwise.duckdns.org
+# Or check DNS resolution:
+nslookup gridwise.duckdns.org
 ```
 
 ---
@@ -116,14 +115,9 @@ docker compose logs --tail=50
 
 ## Step 5: Configure Nginx Reverse Proxy
 
-Copy the pre-configured Nginx site file:
+Copy the pre-configured Nginx site file (which already has `server_name gridwise.duckdns.org;`):
 ```bash
 cp deploy/nginx/gridwise.conf /etc/nginx/sites-available/gridwise.conf
-```
-
-Edit the file and replace `YOUR_DOMAIN` with your actual domain:
-```bash
-sed -i 's/YOUR_DOMAIN/gridwise.yourdomain.com/g' /etc/nginx/sites-available/gridwise.conf
 ```
 
 Enable the site and verify Nginx syntax:
@@ -140,7 +134,7 @@ systemctl reload nginx
 
 Verify HTTP proxying:
 ```bash
-curl http://gridwise.yourdomain.com/health
+curl http://gridwise.duckdns.org/health
 # Expected: {"status":"ok"}
 ```
 
@@ -148,12 +142,12 @@ curl http://gridwise.yourdomain.com/health
 
 ## Step 6: Secure with Let's Encrypt HTTPS (Certbot)
 
-Install Certbot and obtain a free trusted SSL/TLS certificate:
+Install Certbot and obtain a free trusted SSL/TLS certificate for `gridwise.duckdns.org`:
 ```bash
 apt-get install -y certbot python3-certbot-nginx
 
-# Request certificate and auto-configure Nginx
-certbot --nginx -d gridwise.yourdomain.com --non-interactive --agree-tos -m your_email@example.com --redirect
+# Request certificate and auto-configure Nginx with automatic HTTPS redirect
+certbot --nginx -d gridwise.duckdns.org --non-interactive --agree-tos -m your_email@example.com --redirect
 ```
 
 Test automatic certificate renewal:
@@ -165,16 +159,18 @@ certbot renew --dry-run
 
 ## Step 7: External Verification
 
-From your local machine or terminal, test the secured endpoints:
+From your local machine or browser, verify the secured deployment:
 ```bash
 # Liveness probe
-curl -i https://gridwise.yourdomain.com/health
+curl -i https://gridwise.duckdns.org/health
 
 # Readiness probe
-curl -i https://gridwise.yourdomain.com/ready
+curl -i https://gridwise.duckdns.org/ready
 
-# Interactive Swagger Documentation
-# Open https://gridwise.yourdomain.com/docs in your web browser
+# Frontend Web Application & Swagger Docs
+# Open in your browser:
+# https://gridwise.duckdns.org/
+# https://gridwise.duckdns.org/docs
 ```
 
 ---

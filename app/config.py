@@ -44,7 +44,7 @@ MAX_REQUEST_BODY_SIZE_BYTES = int(os.getenv("MAX_REQUEST_BODY_SIZE_BYTES", "1048
 # CORS Configuration
 CORS_ALLOWED_ORIGINS_RAW = os.getenv(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000",
+    "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,https://gridwise.duckdns.org,http://gridwise.duckdns.org",
 )
 CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in CORS_ALLOWED_ORIGINS_RAW.split(",") if origin.strip()
